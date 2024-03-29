@@ -3,3 +3,4 @@
 *.npz
 *.pkl 
 *.pickle
+*.pyc
