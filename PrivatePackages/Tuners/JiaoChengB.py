@@ -357,7 +357,7 @@ class JiaoChengB:
             round = 1
             continue_tuning = 1 # continuously loop through features until converge (combo stays same after a full round)
             while continue_tuning:
-                print(f"\nFEATURE_INDEX: {starting_feature_index} ({self.hyperparameters[starting_feature_index]}) ROUND {round}")
+                print(f"\nFEATURE_INDEX: {starting_feature_index} ({self.hyperparameter_tuning_order[starting_feature_index]}) ROUND {round}")
 
                 # first store previous round's best combo/the starting combo before each round; for comparison at the end
                 last_round_starting_hp_combo = copy.deepcopy(starting_hp_combo)
