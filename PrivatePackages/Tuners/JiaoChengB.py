@@ -429,7 +429,7 @@ class JiaoChengB:
             except:
                 pass
 
-            if self.key_stats_only == False:
+            if self.key_stats_only == True:
                 try:
                     train_mape = mean_absolute_percentage_error(self.train_y, train_pred)
                 except:
@@ -450,7 +450,7 @@ class JiaoChengB:
             df_building_dict['Val RMSE'] = [np.round(val_rmse, 6)]
             df_building_dict['Test RMSE'] = [np.round(test_rmse, 6)]
             
-            if self.key_stats_only == False:
+            if self.key_stats_only == True:
                 df_building_dict['Train MAPE'] = [np.round(train_mape, 6)]
                 df_building_dict['Val MAPE'] = [np.round(val_mape, 6)]
                 df_building_dict['Test MAPE'] = [np.round(test_mape, 6)]
@@ -514,7 +514,7 @@ class JiaoChengB:
             except:
                 pass
             
-            if self.key_stats_only == False:
+            if self.key_stats_only == True:
                 try:
                     train_bal_accu = balanced_accuracy_score(self.train_y, train_pred)
                 except:
@@ -568,7 +568,7 @@ class JiaoChengB:
             df_building_dict['Val recall'] = [np.round(val_recall, 6)]
             df_building_dict['Test recall'] = [np.round(test_recall, 6)]
 
-            if self.key_stats_only == False:
+            if self.key_stats_only == True:
                 df_building_dict['Train balanced_accuracy'] = [np.round(train_bal_accu, 6)]
                 df_building_dict['Val balanced_accuracy'] = [np.round(val_bal_accu, 6)]
                 df_building_dict['Test balanced_accuracy'] = [np.round(test_bal_accu, 6)]
