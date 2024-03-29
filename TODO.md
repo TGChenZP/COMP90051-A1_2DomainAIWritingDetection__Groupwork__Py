@@ -26,6 +26,7 @@ Deep Learning vs Machine Learning
     Feature engineering (2 paths)
         -TFIDF
         -BOW
+            -dimension reduction?
         -#RESEARCH
     -feature selection 
         -Ron's method
