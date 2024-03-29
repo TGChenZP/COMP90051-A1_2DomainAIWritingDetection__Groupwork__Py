@@ -215,13 +215,13 @@ class JiaoChengB:
             
         
         for feature in list(ningxiang_output.keys())[-1]:
-            if feature not in list(self.train_x.columns):
+            if feature >= self.train_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in train_x. Please try again')
                 
-            if feature not in list(self.val_x.columns):
+            if feature >= self.val_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in val_x. Please try again')
                 
-            if feature not in list(self.test_x.columns):
+            if feature >= self.test_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in test_x. Please try again')
                 
         
@@ -342,15 +342,17 @@ class JiaoChengB:
         self.key_stats_only = key_stats_only
 
         tmp_hyperparameter_tuning_order = copy.deepcopy(self.hyperparameter_tuning_order)
-        print('\nDefault combo:', starting_hp_combo, '\n')
 
         for starting_feature_index in range(len(self.hyperparameters)):
             
-            if starting_feature_index != 1:
-                tmp_hyperparameter_tuning_order = [tmp_hyperparameter_tuning_order[1:]] + tmp_hyperparameter_tuning_order[0]
+            if starting_feature_index != 0:
+                tmp_hyperparameter_tuning_order = tmp_hyperparameter_tuning_order[1:] + tmp_hyperparameter_tuning_order[:1]
                 
 
             starting_hp_combo = [self.param_value_reverse_map[hp][self.hyperparameter_default_values[hp]] for hp in self.hyperparameters] # setup starting combination
+            
+            if starting_hp_combo == 0:
+                print('\nDefault combo:', starting_hp_combo, '\n')
 
             round = 1
             continue_tuning = 1 # continuously loop through features until converge (combo stays same after a full round)
@@ -360,7 +362,7 @@ class JiaoChengB:
                 # first store previous round's best combo/the starting combo before each round; for comparison at the end
                 last_round_starting_hp_combo = copy.deepcopy(starting_hp_combo)
 
-                for hp in self.tmp_hyperparameter_tuning_order: # tune each hp in order
+                for hp in tmp_hyperparameter_tuning_order: # tune each hp in order
                     print("\nRound", round, '\nHyperparameter:', hp, f'(index: {self._tuning_order_map_hp[hp]})', '\n')
 
                     last_hyperparameter_best_hp_combo = copy.deepcopy(starting_hp_combo) # store last iteration's best combo
@@ -591,9 +593,9 @@ class JiaoChengB:
         
         if self._tune_features == True:
             del params['features']
-            tmp_train_x = self.train_x[list(self._feature_combo_n_index_map[combo[-1]])] 
-            tmp_val_x = self.val_x[list(self._feature_combo_n_index_map[combo[-1]])]
-            tmp_test_x = self.test_x[list(self._feature_combo_n_index_map[combo[-1]])]
+            tmp_train_x = self.train_x[:, list(self._feature_combo_n_index_map[combo[-1]])] 
+            tmp_val_x = self.val_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
+            tmp_test_x = self.test_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
 
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
@@ -603,8 +605,7 @@ class JiaoChengB:
             clf = self.model(**params)
 
             params['features'] = [list(self._feature_combo_n_index_map[combo[-1]])]
-            params['n_columns'] = len(list(self._feature_combo_n_index_map[combo['features'][0]]))
-            params['n_features'] = combo['features'][0]
+            params['n_columns'] = len(list(self._feature_combo_n_index_map[combo[-1]]))
             params['feature combo ningxiang score'] = self.feature_n_ningxiang_score_dict[self._feature_combo_n_index_map[combo[-1]]]
 
         else:

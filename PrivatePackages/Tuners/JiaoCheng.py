@@ -215,13 +215,13 @@ class JiaoCheng:
             
         
         for feature in list(ningxiang_output.keys())[-1]:
-            if feature not in list(self.train_x.columns):
+            if feature >= self.train_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in train_x. Please try again')
                 
-            if feature not in list(self.val_x.columns):
+            if feature >= self.val_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in val_x. Please try again')
                 
-            if feature not in list(self.test_x.columns):
+            if feature >= self.test_x.shape[1]:
                 raise ValueError(f'feature {feature} in ningxiang output is not in test_x. Please try again')
                 
         
@@ -584,9 +584,9 @@ class JiaoCheng:
         
         if self._tune_features == True:
             del params['features']
-            tmp_train_x = self.train_x[list(self._feature_combo_n_index_map[combo[-1]])] 
-            tmp_val_x = self.val_x[list(self._feature_combo_n_index_map[combo[-1]])]
-            tmp_test_x = self.test_x[list(self._feature_combo_n_index_map[combo[-1]])]
+            tmp_train_x = self.train_x[:, list(self._feature_combo_n_index_map[combo[-1]])] 
+            tmp_val_x = self.val_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
+            tmp_test_x = self.test_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
 
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
@@ -596,8 +596,7 @@ class JiaoCheng:
             clf = self.model(**params)
 
             params['features'] = [list(self._feature_combo_n_index_map[combo[-1]])]
-            params['n_columns'] = len(list(self._feature_combo_n_index_map[combo['features'][0]]))
-            params['n_features'] = combo['features'][0]
+            params['n_columns'] = len(list(self._feature_combo_n_index_map[combo[-1]]))
             params['feature combo ningxiang score'] = self.feature_n_ningxiang_score_dict[self._feature_combo_n_index_map[combo[-1]]]
 
         else:
