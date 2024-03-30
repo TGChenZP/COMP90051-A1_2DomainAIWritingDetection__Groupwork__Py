@@ -351,7 +351,7 @@ class JiaoChengB:
 
             starting_hp_combo = [self.param_value_reverse_map[hp][self.hyperparameter_default_values[hp]] for hp in self.hyperparameters] # setup starting combination
             
-            if starting_hp_combo == 0:
+            if starting_feature_index == 0:
                 print('\nDefault combo:', starting_hp_combo, '\n')
 
             round = 1
@@ -751,7 +751,7 @@ class JiaoChengB:
                         # reverse two dicts
                         index_n_feature_combo_map = {self._feature_combo_n_index_map[key]:key for key in self._feature_combo_n_index_map}
                         # special input
-                        combo.append(index_n_feature_combo_map[tuple(self._str_to_list(row[1]['features']))])
+                        combo.append(index_n_feature_combo_map[tuple(eval(row[1]['features']))])
                         
                     else:
                         if type(self.parameter_choices[hyperparam][0]) is bool:

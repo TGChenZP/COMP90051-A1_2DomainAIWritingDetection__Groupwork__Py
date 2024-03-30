@@ -1101,7 +1101,7 @@ class YangZhouB:
                         # reverse two dicts
                         index_n_feature_combo_map = {self._feature_combo_n_index_map[key]:key for key in self._feature_combo_n_index_map}
                         # special input
-                        combo.append(index_n_feature_combo_map[tuple(self._str_to_list(row[1]['features']))])
+                        combo.append(index_n_feature_combo_map[tuple(eval(row[1]['features']))])
                         
                     else:
                         if type(self.parameter_choices[hyperparam][0]) is bool:
