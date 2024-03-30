@@ -579,7 +579,7 @@ class JiaoChengB:
                 df_building_dict['Val AUC'] = [np.round(val_auc, 6)]
                 df_building_dict['Test AUC'] = [np.round(test_auc, 6)]
 
-        return df_building_dict, val_score, test_score
+        return df_building_dict, val_f1, test_f1
     
 
 
@@ -703,8 +703,8 @@ class JiaoChengB:
         print('Max Score: \n', self.best_score)
 
         if self.clf_type == 'Classification':
-            max_val_id = self.tuning_result['Val accu'].idxmax()
-            print('Max Test Score: \n', self.tuning_result.iloc[max_val_id]['Test accu'])
+            max_val_id = self.tuning_result['Val f1'].idxmax()
+            print('Max Test Score: \n', self.tuning_result.iloc[max_val_id]['Test f1'])
             
         elif self.clf_type == 'Regression':
             max_val_id = self.tuning_result['Val r2'].idxmax()
@@ -764,7 +764,7 @@ class JiaoChengB:
                 if self.clf_type == 'Regression':
                     self.result[combo] = row[1]['Val r2']
                 elif self.clf_type == 'Classification':
-                    self.result[combo] = row[1]['Val accu']
+                    self.result[combo] = row[1]['Val f1']
 
                 self._up_to += 1
                 
