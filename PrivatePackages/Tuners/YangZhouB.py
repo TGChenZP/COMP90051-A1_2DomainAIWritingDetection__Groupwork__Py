@@ -67,6 +67,7 @@ class YangZhouB:
         self._cruising_up_to = 0
         self._feature_combo_n_index_map = None
         self.best_model_saving_address = None
+        self.pytorch_model = False
 
         self.regression_extra_output_columns = ['Train r2', 'Val r2', 'Test r2', 
             'Train RMSE', 'Val RMSE', 'Test RMSE', 'Train MAPE', 'Val MAPE', 'Test MAPE', 'Time']
@@ -99,7 +100,7 @@ class YangZhouB:
 
 
 
-    def read_in_model(self, model, type):
+    def read_in_model(self, model, type, pytorch_model = False):
         """ Reads in underlying model object for tuning, and also read in what type of model it is """
 
         assert type == 'Classification' or type == 'Regression' # check
@@ -107,6 +108,8 @@ class YangZhouB:
         # record
         self.model = model
         self.clf_type = type 
+
+        self.pytorch_model = pytorch_model
 
         print(f'Successfully read in model {self.model}, which is a {self.clf_type} model')
 
@@ -776,7 +779,7 @@ class YangZhouB:
             except:
                 pass
 
-            if self.key_stats_only == True:
+            if self.key_stats_only == False:
                 try:
                     train_mape = mean_absolute_percentage_error(self.train_y, train_pred)
                 except:
@@ -797,7 +800,7 @@ class YangZhouB:
             df_building_dict['Val RMSE'] = [np.round(val_rmse, 6)]
             df_building_dict['Test RMSE'] = [np.round(test_rmse, 6)]
             
-            if self.key_stats_only == True:
+            if self.key_stats_only == False:
                 df_building_dict['Train MAPE'] = [np.round(train_mape, 6)]
                 df_building_dict['Val MAPE'] = [np.round(val_mape, 6)]
                 df_building_dict['Test MAPE'] = [np.round(test_mape, 6)]
@@ -861,7 +864,7 @@ class YangZhouB:
             except:
                 pass
             
-            if self.key_stats_only == True:
+            if self.key_stats_only == False:
                 try:
                     train_bal_accu = balanced_accuracy_score(self.train_y, train_pred)
                 except:
@@ -915,10 +918,10 @@ class YangZhouB:
             df_building_dict['Val recall'] = [np.round(val_recall, 6)]
             df_building_dict['Test recall'] = [np.round(test_recall, 6)]
 
-            if self.key_stats_only == True:
-                df_building_dict['Train balanced_accuracy'] = [np.round(train_bal_accu, 6)]
-                df_building_dict['Val balanced_accuracy'] = [np.round(val_bal_accu, 6)]
-                df_building_dict['Test balanced_accuracy'] = [np.round(test_bal_accu, 6)]
+            if self.key_stats_only == False:
+                df_building_dict['Train balanced_accu'] = [np.round(train_bal_accu, 6)]
+                df_building_dict['Val balanced_accu'] = [np.round(val_bal_accu, 6)]
+                df_building_dict['Test balanced_accu'] = [np.round(test_bal_accu, 6)]
                 df_building_dict['Train AP'] = [np.round(train_ap, 6)]
                 df_building_dict['Val AP'] = [np.round(val_ap, 6)]
                 df_building_dict['Test AP'] = [np.round(test_ap, 6)]
@@ -944,6 +947,9 @@ class YangZhouB:
             tmp_val_x = self.val_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
             tmp_test_x = self.test_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
 
+            if self.pytorch_model:
+                    params['input_dim'] = len(list(self._feature_combo_n_index_map[combo[-1]]))
+
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
                 params[nthp] = self.non_tuneable_parameter_choices[nthp]
@@ -960,6 +966,9 @@ class YangZhouB:
             tmp_train_x = self.train_x
             tmp_val_x = self.val_x
             tmp_test_x = self.test_x
+
+            if self.pytorch_model:
+                params['input_dim'] = self.train_x.shape[1]
 
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
@@ -1101,7 +1110,7 @@ class YangZhouB:
                         # reverse two dicts
                         index_n_feature_combo_map = {self._feature_combo_n_index_map[key]:key for key in self._feature_combo_n_index_map}
                         # special input
-                        combo.append(index_n_feature_combo_map[tuple(self._str_to_list(row[1]['features']))])
+                        combo.append(index_n_feature_combo_map[tuple(eval(row[1]['features']))])
                         
                     else:
                         if type(self.parameter_choices[hyperparam][0]) is bool:

@@ -354,7 +354,7 @@ class JiaoChengB:
 
             starting_hp_combo = [self.param_value_reverse_map[hp][self.hyperparameter_default_values[hp]] for hp in self.hyperparameters] # setup starting combination
             
-            if starting_feature_index == 0:
+            if starting_hp_combo == 0:
                 print('\nDefault combo:', starting_hp_combo, '\n')
 
             round = 1
@@ -582,7 +582,7 @@ class JiaoChengB:
                 df_building_dict['Val AUC'] = [np.round(val_auc, 6)]
                 df_building_dict['Test AUC'] = [np.round(test_auc, 6)]
 
-        return df_building_dict, val_bal_accu, test_bal_accu
+        return df_building_dict, val_f1, test_f1
     
 
 
@@ -712,8 +712,8 @@ class JiaoChengB:
         print('Max Score: \n', self.best_score)
 
         if self.clf_type == 'Classification':
-            max_val_id = self.tuning_result['Val balanced_accu'].idxmax()
-            print('Max Test Score: \n', self.tuning_result.iloc[max_val_id]['Test balanced_accu'])
+            max_val_id = self.tuning_result['Val f1'].idxmax()
+            print('Max Test Score: \n', self.tuning_result.iloc[max_val_id]['Test f1'])
             
         elif self.clf_type == 'Regression':
             max_val_id = self.tuning_result['Val r2'].idxmax()
@@ -773,7 +773,7 @@ class JiaoChengB:
                 if self.clf_type == 'Regression':
                     self.result[combo] = row[1]['Val r2']
                 elif self.clf_type == 'Classification':
-                    self.result[combo] = row[1]['Val balanced_accu']
+                    self.result[combo] = row[1]['Val f1']
 
                 self._up_to += 1
                 

@@ -1,5 +1,5 @@
 from environment import *
-from model_class.utils import *
+from pytorch_to_sklearn.utils import *
 
 class TorchToSklearn_Model(object):
     # serves both for sklearn model class framework for classification and regression

@@ -1,6 +1,6 @@
 # Parts of the project
 
-A. Two different domains # PERSON B
+A. Two different domains # PERSON C
     #RQ-a1: Is the balanced accuracy/fscore (depending on RQ-XXX) for individual domain models better than the global model
     #RQ-a2 (if RQ-a1 successful): Can we build a good model (balanced accuracy/fscore) for predicting domain
     #RQ-a3 (if RQ-a2 successful): Same as RQ-a1 but Build 2 models using PREDICTED CLASS instead of actual class, is this model still better in bal-accu/f1 than global model?
@@ -13,7 +13,7 @@ A. Two different domains # PERSON B
 -Person B fill out other parts of research and come up with own #RQ - NEED TO DO MORE RESEARCH
 
 
-B. Feature Balancing (at least 3 differnet methods) # PERSON C
+B. Feature Balancing (at least 3 different methods) # PERSON B
     #RQ-b1: does using balanced accu/f1 as our metric help with kaggle (careful don't do this too much - will overfit)
     #RQ-b2: does optimising balanced accuracy/f1 in hp tuning improve current models
     #RQ-b3: on best non-deep ml model so far, is upsample/downsample an improvement
@@ -52,7 +52,7 @@ D. -Typical Machine Learning # PERSON B
         #RQ-d1: which models are good performers on either TFIDF or BOW (should confirm this after confirming #RQ-B1)
         #RQ-d2: is TFIDF or BOW or other path better? (don't have to answer early - can do whatever Engineering-ML Algorithm pair that works)
         #RQ-d3: does dimension reduction such as PCA or something else improve?
-        #RQ-d4: does adding in sentence length improve?
+        #RQ-d4: does adding in sentence length as a variable improve?
         #RQ-d5: does changing the feature selection base model from XGB to RFR help?
         #RQ-d6: does z-score normalisation help?
         #RQ-d7: out of all models, which non-deep model (and experiment config) gives the BEST validation (or test) score?
@@ -66,7 +66,7 @@ D. -Typical Machine Learning # PERSON B
 
     -feature selection (2 paths)
         -Ron's method RFR
-        -ROn's method XGB
+        -Ron's method XGB
             -anyone else have any methods?
     
     -Normalisation? (2 paths)

@@ -1,1 +1,1 @@
-from model_class.utils.data import *
+from pytorch_to_sklearn.utils.data import *
