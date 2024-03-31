@@ -39,13 +39,18 @@ def TabularDataFactory(X, y = None, mode='Classification'):
             - X_list: list of instances
             - y_list: list of targets
     """
+    
+    if isinstance(X, csr_matrix):
+        X_list = X.toarray().tolist()
+    else:
+        X_list = X.values.tolist()
 
     if y is None:
-        return X.values.tolist()
+        return X_list
     else:
         if mode == 'Classification':
-            encoder = OneHotEncoder(sparse_output=False, categories='auto', handle_unknown='ignore') # need to change to multi-class probability vector for classification
-            y = encoder.fit_transform(np.array(y).reshape(-1, 1))
-            return X.values.tolist(), y.tolist()
+            encoder = OneHotEncoder(sparse_output=False, categories='auto', handle_unknown='ignore')
+            y_encoded = encoder.fit_transform(np.array(y).reshape(-1, 1))
+            return X_list, y_encoded.tolist()
         else:
-            return X.values.tolist(), y.values.tolist() # regression: just output the y values as per original
+            return X_list, y  # If y is already a list, return it as is
