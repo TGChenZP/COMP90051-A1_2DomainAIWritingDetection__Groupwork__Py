@@ -1,5 +1,5 @@
-from model_class.__template__ import TorchToSklearn_Model
-from model_class.Modules import *
+from pytorch_to_sklearn.__template__ import TorchToSklearn_Model
+from pytorch_to_sklearn.Modules import *
 
 class MLP(TorchToSklearn_Model):
 

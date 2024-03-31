@@ -1,2 +1,2 @@
-from model_class.MLP import MLP
-from model_class.Transformer import Transformer
+from pytorch_to_sklearn.MLP import MLP
+from pytorch_to_sklearn.Transformer import Transformer
