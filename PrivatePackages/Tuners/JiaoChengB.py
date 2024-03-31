@@ -58,6 +58,7 @@ class JiaoChengB:
         self._tune_features = False
         self.hyperparameter_default_values = None
         self.best_model_saving_address = None
+        self.pytorch_model = False
 
         self.regression_extra_output_columns = ['Train r2', 'Val r2', 'Test r2', 
             'Train RMSE', 'Val RMSE', 'Test RMSE', 'Train MAPE', 'Val MAPE', 'Test MAPE', 'Time']
@@ -90,7 +91,7 @@ class JiaoChengB:
 
 
 
-    def read_in_model(self, model, type):
+    def read_in_model(self, model, type, pytorch_model = False):
         """ Reads in underlying model object for tuning, and also read in what type of model it is """
 
         assert type == 'Classification' or type == 'Regression' # check
@@ -98,6 +99,8 @@ class JiaoChengB:
         # record
         self.model = model
         self.clf_type = type 
+
+        self.pytorch_model = pytorch_model
 
         print(f'Successfully read in model {self.model}, which is a {self.clf_type} model')
 
@@ -597,6 +600,9 @@ class JiaoChengB:
             tmp_val_x = self.val_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
             tmp_test_x = self.test_x[:,list(self._feature_combo_n_index_map[combo[-1]])]
 
+            if self.pytorch_model:
+                    params['input_dim'] = len(list(self._feature_combo_n_index_map[combo[-1]]))
+
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
                 params[nthp] = self.non_tuneable_parameter_choices[nthp]
@@ -613,6 +619,9 @@ class JiaoChengB:
             tmp_train_x = self.train_x
             tmp_val_x = self.val_x
             tmp_test_x = self.test_x
+
+            if self.pytorch_model:
+                params['input_dim'] = self.train_x.shape[1]
 
             # add non tuneable parameters
             for nthp in self.non_tuneable_parameter_choices:
