@@ -25,7 +25,16 @@ class PositionalWordEmbedding(nn.Module):
         self.embedding = nn.Embedding(num_embeddings=n_unique_tokens, embedding_dim=d_model)
 
     def forward(self, x):
-        # Convert x to int tensor if it's not already
-        if x.dtype != torch.int64:
-            x = x.long()  # Convert to int tensor
-        return (self.pe[:, :x.size(1)] + self.embedding(x)).float()
+
+        return (self.pe[:, :x.size(1)] + self.embedding(x))
+
+
+class WordEmbedding(nn.Module):
+    def __init__(self, d_model, n_unique_tokens, max_len=5000):
+        super(WordEmbedding, self).__init__()
+
+        self.embedding = nn.Embedding(num_embeddings=n_unique_tokens, embedding_dim=d_model)
+
+    def forward(self, x):
+
+        return self.embedding(x)

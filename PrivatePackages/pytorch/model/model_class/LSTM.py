@@ -1,7 +1,7 @@
 from model.model_class.layers.modules import *
 from model.model_class.__template__ import *
 from model.model_class.layers.SelfAttention_Family import FullAttention, AttentionLayer
-from model.model_class.layers.Embed import PositionalWordEmbedding
+from model.model_class.layers.Embed import PositionalWordEmbedding, WordEmbedding
 
 
 class LSTM(ClassificationModel):
@@ -12,7 +12,7 @@ class LSTM(ClassificationModel):
 
             torch.manual_seed(self.configs.random_state)
 
-            self.embedding = PositionalWordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len)
+            self.embedding = WordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len)
 
             self.lstm = nn.LSTM(
                 input_size = self.configs.d_model,
@@ -43,7 +43,7 @@ class LSTM(ClassificationModel):
                                                       self.configs.activation, self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
 
             self.out = nn.Linear(self.configs.d_model * 2 if self.configs.bidirectional else self.configs.d_model, self.configs.d_output)
-            self.sigmoid = nn.Sigmoid()
+            self.softmax = nn.Softmax(dim=1)
 
             # initialise parameters
             for name, param in self.lstm.named_parameters():
@@ -83,6 +83,6 @@ class LSTM(ClassificationModel):
             for layer in self.mlp:
                 x = layer(x)
 
-            y = self.sigmoid(self.out(x))
+            y = self.softmax(self.out(x))
 
             return y

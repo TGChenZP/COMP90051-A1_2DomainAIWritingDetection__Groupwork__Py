@@ -84,7 +84,7 @@ class ClassificationModel(object):
  
                 
                 X, y = torch.LongTensor(total_train_X[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
-                            torch.LongTensor(total_train_y[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
+                            torch.FloatTensor(total_train_y[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
                 
                 if len(X) == 0:
                     break
@@ -112,10 +112,11 @@ class ClassificationModel(object):
 
             # print epoch training results
             epoch_pred_label = [1 if i[1] > i[0] else 0 for i in epoch_pred]
+            epoch_label = [1 if i[1] > i[0] else 0 for i in epoch_true]
 
-            epoch_accuracy = accuracy_score(epoch_true, epoch_pred_label)
-            epoch_f1 = f1_score(epoch_true, epoch_pred_label)
-            epoch_bal_accu = balanced_accuracy_score(epoch_true, epoch_pred_label)
+            epoch_accuracy = accuracy_score(epoch_label, epoch_pred_label)
+            epoch_f1 = f1_score(epoch_label, epoch_pred_label)
+            epoch_bal_accu = balanced_accuracy_score(epoch_label, epoch_pred_label)
             record = f'Epoch {epoch+1} Train | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f}| F1: {epoch_f1:>7.4f} | Balanced Accuracy: {epoch_bal_accu:>7.4f} '
             print(record)
             self.training_record.append(record)
@@ -133,9 +134,6 @@ class ClassificationModel(object):
             if scheduler:
                 scheduler.step(valid_loss)
 
-        self.prediction_csv.to_csv(self.configs.saving_address + f'{self.name}_prediction.csv')
-        with open(self.configs.saving_address+'logs/'+f'{self.name}_training_log.json', 'w') as f:
-            json.dump({"training_log": self.training_record}, f, indent=2)
 
         return best_epoch
 
@@ -168,13 +166,15 @@ class ClassificationModel(object):
 
         epoch_pred_y_label = [1 if i[1] > i[0] else 0 for i in pred_val_y]
 
+        epoch_y_label = [1 if i[1] > i[0] else 0 for i in val_y]
+
         pred_val_y_tensor = torch.FloatTensor(np.array(pred_val_y)).to(self.device)
-        val_y_tensor = torch.LongTensor(val_y).to(self.device)
+        val_y_tensor = torch.FloatTensor(val_y).to(self.device)
         
         epoch_loss = self.validation_criterion(pred_val_y_tensor, val_y_tensor).cpu().numpy()
-        epoch_accuracy = accuracy_score(val_y, epoch_pred_y_label)
-        epoch_f1 = f1_score(val_y, epoch_pred_y_label)
-        epoch_bal_accu = balanced_accuracy_score(val_y, epoch_pred_y_label)
+        epoch_accuracy = accuracy_score(epoch_y_label, epoch_pred_y_label)
+        epoch_f1 = f1_score(epoch_y_label, epoch_pred_y_label)
+        epoch_bal_accu = balanced_accuracy_score(epoch_y_label, epoch_pred_y_label)
         record = f'Epoch {epoch+1} Val   | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f}| F1: {epoch_f1:>7.4f} | Balanced Accuracy: {epoch_bal_accu:>7.4f} '
         print(record)
         self.training_record.append(record) 

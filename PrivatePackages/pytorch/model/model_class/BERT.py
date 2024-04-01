@@ -57,6 +57,8 @@ class BERT(ClassificationModel):
                                                         self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
 
             self.out = nn.Linear(configs.d_model, configs.d_output)
+            self.softmax = nn.Softmax(dim=1)
+
 
         def forecast(self, x):
             # Embedding
@@ -74,10 +76,12 @@ class BERT(ClassificationModel):
 
             x = self.forecast(x)
 
-            x = x[:, 0, :]
+            x = x[:, 0, :] # cls
 
             for layer in self.mlp:
                 x = layer(x)
+
+            y = self.softmax(self.out(x))
             
-            return x  
+            return y  
         
