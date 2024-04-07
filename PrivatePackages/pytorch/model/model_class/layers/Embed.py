@@ -6,7 +6,7 @@ import math
 
 
 class PositionalWordEmbedding(nn.Module):
-    def __init__(self, d_model, n_unique_tokens, max_len=5000):
+    def __init__(self, d_model, n_unique_tokens, max_len=5000, train_embedding = True):
         super(PositionalWordEmbedding, self).__init__()
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model).float()
@@ -23,6 +23,7 @@ class PositionalWordEmbedding(nn.Module):
         self.register_buffer('pe', pe)
 
         self.embedding = nn.Embedding(num_embeddings=n_unique_tokens, embedding_dim=d_model)
+        self.embedding.weight.requires_grad = train_embedding
 
     def forward(self, x):
 
@@ -30,10 +31,11 @@ class PositionalWordEmbedding(nn.Module):
 
 
 class WordEmbedding(nn.Module):
-    def __init__(self, d_model, n_unique_tokens, max_len=5000):
+    def __init__(self, d_model, n_unique_tokens, max_len=5000, train_embedding = True):
         super(WordEmbedding, self).__init__()
 
         self.embedding = nn.Embedding(num_embeddings=n_unique_tokens, embedding_dim=d_model)
+        self.embedding.weight.requires_grad = train_embedding
 
     def forward(self, x):
 

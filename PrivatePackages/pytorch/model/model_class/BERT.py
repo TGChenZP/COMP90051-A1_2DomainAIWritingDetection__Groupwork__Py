@@ -30,7 +30,7 @@ class BERT(ClassificationModel):
             assert configs.d_model % configs.n_heads == 0, "d_model must be a multiple of n_heads"
 
             # Embedding
-            self.embedding = PositionalWordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len)
+            self.embedding = PositionalWordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len, train_embedding=configs.train_embedding)
             # Encoder
             self.encoder = Encoder(
                 [

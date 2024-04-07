@@ -12,7 +12,7 @@ class LSTM(ClassificationModel):
 
             torch.manual_seed(self.configs.random_state)
 
-            self.embedding = WordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len)
+            self.embedding = WordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len, configs.train_embedding)
 
             self.lstm = nn.LSTM(
                 input_size = self.configs.d_model,
@@ -24,7 +24,7 @@ class LSTM(ClassificationModel):
                 )
             
             self.mha = AttentionLayer(attention = FullAttention(mask_flag=self.configs.mask_flag, scale=None, attention_dropout=self.configs.dropout, output_attention=False), 
-                                      d_model = self.configs.d_model, n_heads = self.configs.n_heads) if self.configs.n_heads > 0 else None
+                                      d_model = self.configs.d_model * (2 if self.configs.bidirectional else 1), n_heads = self.configs.n_heads) if self.configs.n_heads > 0 else None
             self.ffwd = FeedForward(self.configs, self.configs.d_model * 2 if self.configs.bidirectional else self.configs.d_model, self.configs.activation, self.configs.dropout) if self.configs.n_heads > 0 else None
             
             self.flatten = nn.Sequential(

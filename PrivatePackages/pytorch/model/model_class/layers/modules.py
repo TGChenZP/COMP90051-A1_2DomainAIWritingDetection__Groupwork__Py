@@ -71,3 +71,25 @@ class FeedForward(nn.Module):
         x_add_attn = self.dropout(self.linear1(self.activation(self.linear2(norm_x_add_attn))))
 
         return self.norm2(norm_x_add_attn + x_add_attn)
+    
+
+class GradientReversalLayer(nn.Module):
+    def __init__(self, lambda_=1):
+        super(GradientReversalLayer, self).__init__()
+        self.lambda_ = lambda_
+
+    def forward(self, x):
+        return GradientReversalFunction.apply(x, self.lambda_)
+
+class GradientReversalFunction(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, input, lambda_):
+        # Save context for backward pass
+        ctx.lambda_ = lambda_
+        return input.clone()
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        # Reverse the gradient during backward pass
+        grad_input = -ctx.lambda_ * grad_output.clone()
+        return grad_input, None
