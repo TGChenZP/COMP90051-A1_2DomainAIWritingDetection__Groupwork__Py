@@ -1,2 +1,2 @@
-from model.model_class.BERT import BERT
-from model.model_class.LSTM import LSTM
+from model.model_class.BERT import BERT, BERT_DANN
+from model.model_class.LSTM import LSTM, LSTM_DANN
