@@ -50,7 +50,7 @@ class BERT(ClassificationModel):
             # Decode
 
             if self.configs.res_learning:
-                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
             else:
                 self.mlp = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
@@ -69,21 +69,33 @@ class BERT(ClassificationModel):
 
             return enc_out
 
-    
 
-        def forward(self, x):
+        def forward(self, x, mask=False):
             
+            if mask: # pretraining
+                x = self.forecast(x)
 
-            x = self.forecast(x)
+                x = x[:, mask, :] # cls
 
-            x = x[:, 0, :] # cls
+                for layer in self.mlp:
+                    x = layer(x)
 
-            for layer in self.mlp:
-                x = layer(x)
+                y = self.out(x)
+                
+                return y  
 
-            y = self.softmax(self.out(x))
-            
-            return y  
+            else:
+
+                x = self.forecast(x)
+
+                x = x[:, 0, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.softmax(self.out(x))
+                
+                return y  
 
 
 class BERT_DANN(DANN_Model):
@@ -130,17 +142,17 @@ class BERT_DANN(DANN_Model):
             self.gradient_reverse = GradientReversalLayer()
 
             if self.configs.res_learning:
-                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
             else:
-                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_clf = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
                 
             if self.configs.res_learning:
-                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
             else:
-                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_dom = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
 
             self.out_dom = nn.Linear(self.configs.d_model, self.configs.d_output)
@@ -159,7 +171,7 @@ class BERT_DANN(DANN_Model):
 
     
 
-        def forward(self, x):
+        def forward(self, x, mask=False):
             
 
             x = self.forecast(x)
