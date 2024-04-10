@@ -8,3 +8,4 @@ scipy
 lightgbm
 catboost
 torch
+reformer_pytorch
