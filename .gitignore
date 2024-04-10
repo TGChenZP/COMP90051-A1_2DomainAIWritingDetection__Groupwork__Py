@@ -5,3 +5,4 @@
 *.pickle
 *.pyc
 *.csv
+catboost_info
