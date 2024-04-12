@@ -4,10 +4,6 @@
 | LGBC | tfidf | downsample | global |
 | LGBC | tfidf | smote | global |
 | LGBC | tfidf | adasyn | global | 
-| LGBC | tfidf | upsample | domain 1 |
-| LGBC | tfidf | downsample | domain 1|
-| LGBC | tfidf | smote | domain 1|
-| LGBC | tfidf | adasyn | domain 1| 
 | LGBC | tfidf | upsample | domain 2 |
 | LGBC | tfidf | downsample | domain 2 | 
 | LGBC | tfidf | smote | domain 2 |
