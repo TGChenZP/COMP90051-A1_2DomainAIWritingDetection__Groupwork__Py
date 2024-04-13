@@ -1183,7 +1183,7 @@ class HingeModel(object):
                 pred, true = self.model(X), y 
 
                 # calculate loss
-                loss = self.criterion(pred, true)
+                loss = self.criterion(pred, true) # TODO: must change this true to [1, 0, 1, 0]
 
                 # backpropagation
                 loss.backward()

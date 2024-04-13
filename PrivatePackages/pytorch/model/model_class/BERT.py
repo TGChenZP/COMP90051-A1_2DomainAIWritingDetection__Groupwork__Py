@@ -95,7 +95,7 @@ class BERT(ClassificationModel):
                 for layer in self.mlp:
                     x = layer(x)
 
-                y = self.softmax(self.out(x))
+                y = self.out(x)
                 
                 return y  
 
@@ -200,9 +200,9 @@ class BERT_DANN(DANN_Model):
                 for layer in self.mlp_dom:
                     rev_x = layer(rev_x)
 
-                y = self.softmax(self.out_clf(x))
+                y = self.out_clf(x)
 
-                dom = self.softmax(self.out_dom(rev_x))
+                dom = self.out_dom(rev_x)
 
                 return y, dom
         
@@ -291,7 +291,7 @@ class BERT_DBCE(DomainBCEModel):
                 for layer in self.mlp:
                     x = layer(x)
 
-                y = self.softmax(self.out(x))
+                y = self.out(x)
                 
                 return y  
             
