@@ -41,4 +41,4 @@ class W2V(W2V_Model):
 
             predictions = predictions.reshape(self.configs.batch_size, -1)
 
-            return prediction
+            return predictionk
