@@ -129,3 +129,117 @@ def get_distribution(train_y) -> Tuple[float, float]:
     label = [y[1] for y in train_y]
 
     return np.mean(label), 1-np.mean(label)
+
+# def W2V_DataFactory(data: list, context_window: int, seed: int, raw_token_pytorch_map: dict, k) -> list:
+
+#     """ Get W2V training data """
+    
+#     assert context_window % 2 == 1, 'context window must be odd'
+
+#     np.random.seed(seed)
+
+#     MAX_SAMPLED_NEGATIVE_TOKENS = 10000
+
+#     retokenised_keys = list(raw_token_pytorch_map.keys())
+
+#     negative_tokens = np.random.choice(retokenised_keys, MAX_SAMPLED_NEGATIVE_TOKENS)
+
+#     negative_up_to = 0
+
+#     w2v_data = []
+
+#     for instance in tqdm(data):
+#         tokens = [context_window//2 * 'CLS'] + instance['text'] + [context_window//2 * raw_token_pytorch_map['PAD']]
+
+#         for i in range(context_window//2, len(tokens) - context_window//2):
+            
+#             focus_token_retokenised = raw_token_pytorch_map.get(tokens[i], raw_token_pytorch_map['UNK'])
+#             context_words = set()
+
+#             for j in range(-context_window//2, context_window//2+1):
+#                 if j != 0: # don't want to make positive sample with self
+#                     if tokens[j] in context_words: # CLS and Padding (being start and end) being repeated
+#                         continue 
+                    
+#                     new_instance = {'token': focus_token_retokenised, 'context': raw_token_pytorch_map.get(tokens[j], raw_token_pytorch_map['UNK']), 'label': 1}
+#                     w2v_data.append(new_instance)
+#                     context_words.add(tokens[j])
+            
+#             for j in range(len(context_words)): # sample the same number of negatives
+#                 # TODO: different for each round?
+#                 while True:
+                    
+#                     if negative_up_to == MAX_SAMPLED_NEGATIVE_TOKENS:
+#                         negative_up_to = 0
+#                         #TODO: shuffle
+
+#                     sampled_negative_retokenised = negative_tokens[negative_up_to]
+#                     negative_up_to += 1
+#                     if sampled_negative_retokenised not in context_words: # didn't sample a positive case
+#                         break
+
+#                 new_instance = {'token': focus_token_retokenised, 'context': sampled_negative_retokenised, 'label': 0}
+#                 w2v_data.append(new_instance)
+    
+#     return w2v_data
+
+
+def BERT_pretrain_Generation(data: list, seed: int, raw_token_pytorch_map: dict, MAX_SENTENCE_LENGTH):
+    
+    np.random.seed(seed)
+
+    MAX_SAMPLED_PROBS = 10000
+
+    mask_randomness = np.random.uniform(0, 1, size=MAX_SAMPLED_PROBS)
+
+    negative_up_to = 0
+
+    bert_data = []
+
+    for instance in tqdm(data):
+        
+
+        tokens = instance['text']
+
+        tokens = [raw_token_pytorch_map['CLS']] + [raw_token_pytorch_map.get(token, raw_token_pytorch_map['UNK']) for token in tokens]
+        tokens = tokens[:MAX_SENTENCE_LENGTH]
+
+        # 15% of tokens are random
+        masked_token_positions = np.random.choice(range(len(tokens)), int(0.15 * len(tokens)), False)
+        
+        # 80% becomes [MASK], 15% becomes random, 10% unchanged ith token, 10% random token
+        for masked_token_position in masked_token_positions:
+            if mask_randomness[negative_up_to] < 0.8:
+                tokens[masked_token_position] = raw_token_pytorch_map['MASK']
+            elif mask_randomness[negative_up_to] > 0.9:
+                tokens[masked_token_position] = np.random.choice(tokens)
+            
+        
+        tokens = tokens + [raw_token_pytorch_map['PAD']] * (MAX_SENTENCE_LENGTH - len(tokens))
+
+        for masked_token_position in masked_token_positions:
+            new_instance = {}
+            new_instance['input'] = tokens
+            new_instance['label'] = tokens[masked_token_position]
+            new_instance['mask'] = masked_token_position
+            new_instance['domain'] = instance['domain']
+            bert_data.append(new_instance)
+    
+    return bert_data
+
+def BERT_pretrain_DataFactory(train_data, val_data, seed, raw_token_pytorch_map, MAX_SENTENCE_LENGTH):
+        
+    train_data = BERT_pretrain_Generation(train_data, seed, raw_token_pytorch_map, MAX_SENTENCE_LENGTH)
+    val_data = BERT_pretrain_Generation(val_data, seed, raw_token_pytorch_map, MAX_SENTENCE_LENGTH)
+
+    train_x = [instance['input'] for instance in train_data]
+    train_y = [instance['label'] for instance in train_data]
+    train_mask = [instance['mask'] for instance in train_data]
+    train_domain = [instance['domain'] for instance in train_data]
+    val_x = [instance['input'] for instance in val_data]
+    val_y = [instance['label'] for instance in val_data]
+    val_mask = [instance['mask'] for instance in val_data]
+    val_domain = [instance['domain'] for instance in val_data]
+    
+
+    return train_x, train_y, train_mask, train_domain, val_x, val_y, val_mask, val_domain

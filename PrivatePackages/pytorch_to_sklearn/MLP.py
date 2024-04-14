@@ -50,9 +50,6 @@ class MLP(TorchToSklearn_Model):
 
             y = self.full_model(X)
 
-            if self.CFG.mode == 'Classification': # if classification, apply softmax to get the probability vector
-                y = torch.softmax(y, dim=1)
-
             return y
 
     def __init__(self, 

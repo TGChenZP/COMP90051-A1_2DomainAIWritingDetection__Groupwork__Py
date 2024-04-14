@@ -90,10 +90,6 @@ class Transformer(TorchToSklearn_Model):
             else: # concatenate the output from all layers in transformer_output
                 y = self.out_mlp(torch.cat([transformer_output[:, i, :] for i in range(transformer_output.size(1))], dim=1))
 
-
-            if self.CFG.mode == 'Classification': # if classification, apply softmax to get the probability vector
-                y = torch.softmax(y, dim=1)
-
             return y
 
     def __init__(self, 
