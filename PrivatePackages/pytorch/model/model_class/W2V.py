@@ -6,14 +6,11 @@ from model.model_class.layers.Embed import PositionalWordEmbedding
 from model.model_class.layers.modules import *
 from model.model_class.layers.Transformer_EncDec import Encoder, EncoderLayer
 import numpy as np
-from model.model_class.__template__ import *
 
 
 class W2V(W2V_Model):
 
     class Model(nn.Module):
-
-
 
         def __init__(self, configs):
             super().__init__() 
@@ -27,18 +24,20 @@ class W2V(W2V_Model):
         def forward(self, X, mask):
 
             dim_1_mask = []
-            for i in range(self.configs.batch_size):
+            for i in range(X.shape[0]):
                 dim_1_mask.extend([i for _ in range(self.configs.k)])
-            dim_2_mask = []
-            for i in range(self.configs.batch_size):
-                dim_2_mask.extend(mask[i])
+            dim_2_mask = mask.view(-1)
+            
+            dim_1_mask = torch.LongTensor(np.array(dim_1_mask)).to(self.configs.device)
             
             embed = self.embed(X)
 
             prediction = self.linear(embed)
 
-            predictions = predictions[dim_1_mask, dim_2_mask]
+            prediction = prediction[dim_1_mask, dim_2_mask]
 
-            predictions = predictions.reshape(self.configs.batch_size, -1)
+            
+
+            prediction = prediction.reshape(X.shape[0], -1)
 
             return prediction

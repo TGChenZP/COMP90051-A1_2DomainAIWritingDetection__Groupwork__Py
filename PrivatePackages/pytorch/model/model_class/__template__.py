@@ -1583,9 +1583,7 @@ class W2V_Model():
         np.random.seed(self.configs.random_state) # TODO: if use dataset and dataloader, need to change
         seeds = [np.random.randint(0, 1000000) for _ in range(self.configs.epochs)]
 
-        target = torch.LongTensor([[0] for _ in range(self.configs.batch_size)]).to(self.device)
-
-        # min_loss = np.inf
+        min_loss = np.inf
         for epoch in range(self.configs.epochs):
 
             if not patience: # end training when no more patience
@@ -1607,16 +1605,18 @@ class W2V_Model():
  
                 
                 X, mask = torch.LongTensor(total_train_X[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
-                            torch.FloatTensor(total_train_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
-                
+                            torch.LongTensor(total_train_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
+
                 if len(X) == 0:
                     break
+
+                target = torch.LongTensor([0 for _ in range(X.shape[0])]).to(self.device)
 
                 self.optimizer.zero_grad()
                 pred = self.model(X, mask)  
 
                 # calculate loss
-                loss = self.criterion(pred, target)
+                loss = self.pretrain_criterion(pred, target)
 
                 # backpropagation
                 loss.backward()
@@ -1635,7 +1635,7 @@ class W2V_Model():
             # print epoch training results
             epoch_pred_label = [1 if i[0] == max(i) else 0 for i in epoch_pred]
 
-            epoch_accuracy = accuracy_score([1 for _ in range(epoch_pred_label)], epoch_pred_label)
+            epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_label))], epoch_pred_label)
         
 
             record = f'''Epoch {epoch+1} Train | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f} '''
@@ -1666,7 +1666,7 @@ class W2V_Model():
             for mini_batch_number in range(len(future_X)//self.configs.batch_size+1): 
 
                 X, mask = torch.LongTensor(future_X[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
-                            torch.FloatTensor(future_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
+                            torch.LongTensor(future_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
 
                 if len(X) == 0:
                     break
@@ -1685,9 +1685,9 @@ class W2V_Model():
         epoch_pred_y_label = [1 if i[0] == max(i) else 0 for i in pred_val_y]
 
         pred_val_y_tensor = torch.FloatTensor(np.array(pred_val_y)).to(self.device)
-        val_y_tensor = torch.FloatTensor([[0] for _ in range(len(pred_val_y_tensor))]).to(self.device)
+        val_y_tensor = torch.LongTensor([0 for _ in range(len(pred_val_y_tensor))]).to(self.device)
 
-        epoch_loss = self.validation_criterion(pred_val_y_tensor, val_y_tensor).cpu().numpy()
+        epoch_loss = self.pretrain_validation_criterion(pred_val_y_tensor, val_y_tensor).cpu().numpy()
         epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_y_label))], epoch_pred_y_label)
 
         record = f'''Epoch {epoch+1} Val   | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f}'''
