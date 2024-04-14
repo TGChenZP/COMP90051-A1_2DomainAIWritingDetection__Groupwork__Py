@@ -207,7 +207,7 @@ class BERT_DANN(DANN_Model):
                 return y, dom
         
 
-class BERT_DBCE(DomainBCEModel):
+class BERT_DCE_DANN(DCE_DANNModel):
 
     class Model(nn.Module):
         """
@@ -247,14 +247,25 @@ class BERT_DBCE(DomainBCEModel):
 
             # Decode
 
-            if self.configs.res_learning:
-                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
-                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
-            else:
-                self.mlp = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
-                                                        self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
 
-            self.out = nn.Linear(configs.d_model, configs.d_output)
+            self.gradient_reverse = GradientReversalLayer()
+
+            if self.configs.res_learning:
+                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
+            else:
+                self.mlp_clf = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
+                
+            if self.configs.res_learning:
+                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
+            else:
+                self.mlp_dom = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
+
+            self.out_dom = nn.Linear(self.configs.d_model, self.configs.d_output)
+            self.out_clf = nn.Linear(self.configs.d_model, self.configs.d_output)
             self.softmax = nn.Softmax(dim=1)
 
 
@@ -267,6 +278,7 @@ class BERT_DBCE(DomainBCEModel):
 
             return enc_out
 
+    
 
         def forward(self, x, mask=False):
             
@@ -280,20 +292,26 @@ class BERT_DBCE(DomainBCEModel):
 
                 y = self.out(x)
                 
-                return y  
+                return y 
 
             else:
-
                 x = self.forecast(x)
 
                 x = x[:, 0, :] # cls
 
-                for layer in self.mlp:
+                for layer in self.mlp_clf:
                     x = layer(x)
 
-                y = self.out(x)
-                
-                return y  
+                rev_x = self.gradient_reverse(x)
+
+                for layer in self.mlp_dom:
+                    rev_x = layer(rev_x)
+
+                y = self.out_clf(x)
+
+                dom = self.out_dom(rev_x)
+
+                return y, dom
             
 
 class BERT_Hinge(HingeModel):
