@@ -13,7 +13,7 @@ class W2V(W2V_Model):
     class Model(nn.Module):
 
         def __init__(self, configs):
-            super().__init__() 
+            super().__init__()
 
             self.configs = configs
 
@@ -27,16 +27,16 @@ class W2V(W2V_Model):
             for i in range(X.shape[0]):
                 dim_1_mask.extend([i for _ in range(self.configs.k)])
             dim_2_mask = mask.view(-1)
-            
+
             dim_1_mask = torch.LongTensor(np.array(dim_1_mask)).to(self.configs.device)
-            
+
             embed = self.embed(X)
 
             prediction = self.linear(embed)
 
             prediction = prediction[dim_1_mask, dim_2_mask]
 
-            
+
 
             prediction = prediction.reshape(X.shape[0], -1)
 

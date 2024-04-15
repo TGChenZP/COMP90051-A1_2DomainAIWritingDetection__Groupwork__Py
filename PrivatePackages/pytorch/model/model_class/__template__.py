@@ -1524,7 +1524,8 @@ class HingeModel(object):
                 pred_y.extend(pred.detach().cpu().tolist())
     
         return pred_y
-    
+
+
 
 class W2V_Model():
     class GeneralModel():
@@ -1534,9 +1535,9 @@ class W2V_Model():
     def __init__(self, configs, name="Model"):
         super().__init__()
         self.configs = configs
-        self.name = self.configs.name 
+        self.name = self.configs.name
         self.model = self.Model(self.configs) # create the model
-        
+
         self.n_unique_tokens = self.configs.n_unique_tokens
 
         # operations
@@ -1551,7 +1552,7 @@ class W2V_Model():
         # automatically detect GPU device if avilable
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.configs.device = self.device
-            # --- 
+            # ---
         self.model.to(self.device)
         self.pretrain_criterion.to(self.device)
         self.pretrain_validation_criterion.to(self.device)
@@ -1560,17 +1561,17 @@ class W2V_Model():
 
     def __str__(self):
         return self.name
-    
+
     def save(self, mark=''):
         mark = ' ' + mark if mark else mark
         torch.save(self.model.state_dict(), os.path.join(self.configs.rootpath, f'state/{self}{mark}.pt'))
-    
+
     def load(self, mark=''):
         mark = ' ' + mark if mark else mark
         self.model.load_state_dict(torch.load(os.path.join(self.configs.rootpath, f'state/{self}{mark}.pt'), map_location=self.device))
-    
+
     def fit(self, total_train_X, total_train_mask, total_val_X, total_val_mask):
-        
+
         total_train_X, total_train_mask = copy.deepcopy(total_train_X), copy.deepcopy(total_train_mask)
 
         self.model.train()
@@ -1591,7 +1592,7 @@ class W2V_Model():
 
             epoch_loss = 0
             epoch_pred, epoch_true = [], []
-            
+
 
             np.random.seed(seeds[epoch])
             np.random.shuffle(total_train_X)
@@ -1602,8 +1603,8 @@ class W2V_Model():
             n_batch = 0
 
             for mini_batch_number in tqdm(range(len(total_train_X)//self.configs.batch_size+1)):
- 
-                
+
+
                 X, mask = torch.LongTensor(total_train_X[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
                             torch.LongTensor(total_train_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
 
@@ -1613,7 +1614,7 @@ class W2V_Model():
                 target = torch.LongTensor([0 for _ in range(X.shape[0])]).to(self.device)
 
                 self.optimizer.zero_grad()
-                pred = self.model(X, mask)  
+                pred = self.model(X, mask)
 
                 # calculate loss
                 loss = self.pretrain_criterion(pred, target)
@@ -1623,20 +1624,20 @@ class W2V_Model():
                 if self.configs.grad_clip: # gradient clip
                     nn.utils.clip_grad_norm(self.model.parameters(), 2)
                 self.optimizer.step()
-                
+
                 epoch_loss += loss.detach().cpu().numpy()
                 epoch_pred += pred.detach().cpu().tolist()
 
                 n_batch += 1
-            
-        
+
+
             epoch_loss /= n_batch
 
             # print epoch training results
             epoch_pred_label = [1 if i[0] == max(i) else 0 for i in epoch_pred]
 
             epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_label))], epoch_pred_label)
-        
+
 
             record = f'''Epoch {epoch+1} Train | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f} '''
             print(record)
@@ -1663,23 +1664,23 @@ class W2V_Model():
 
         with torch.no_grad():
 
-            for mini_batch_number in range(len(future_X)//self.configs.batch_size+1): 
+            for mini_batch_number in range(len(future_X)//self.configs.batch_size+1):
 
                 X, mask = torch.LongTensor(future_X[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device), \
                             torch.LongTensor(future_mask[mini_batch_number*self.configs.batch_size:(mini_batch_number+1)*self.configs.batch_size]).to(self.device)
 
                 if len(X) == 0:
                     break
-                
+
                 pred = self.model(X, mask)
 
                 pred_y.extend(pred.detach().cpu().tolist())
-    
+
         return pred_y
-        
+
 
     def eval(self, total_val_X, total_val_mask, epoch, evaluation_mode = False):
-        
+
         pred_val_y = self.predict(total_val_X, total_val_mask)
 
         epoch_pred_y_label = [1 if i[0] == max(i) else 0 for i in pred_val_y]
@@ -1691,7 +1692,7 @@ class W2V_Model():
         epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_y_label))], epoch_pred_y_label)
 
         record = f'''Epoch {epoch+1} Val   | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f}'''
-       
+
         print(record)
 
         if not evaluation_mode:

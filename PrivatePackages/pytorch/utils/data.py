@@ -130,58 +130,65 @@ def get_distribution(train_y) -> Tuple[float, float]:
 
     return np.mean(label), 1-np.mean(label)
 
-# def W2V_DataFactory(data: list, context_window: int, seed: int, raw_token_pytorch_map: dict, k) -> list:
+def W2V_DataFactory(data: list, context_window: int, seed: int, raw_token_pytorch_map: dict, k) -> list:
 
-#     """ Get W2V training data """
+    """ Get W2V training data """
     
-#     assert context_window % 2 == 1, 'context window must be odd'
+    assert context_window % 2 == 1, 'context window must be odd'
 
-#     np.random.seed(seed)
+    np.random.seed(seed)
 
-#     MAX_SAMPLED_NEGATIVE_TOKENS = 10000
+    MAX_SAMPLED_NEGATIVE_TOKENS = 10000
 
-#     retokenised_keys = list(raw_token_pytorch_map.keys())
+    retokenised_keys = list(raw_token_pytorch_map.keys())
 
-#     negative_tokens = np.random.choice(retokenised_keys, MAX_SAMPLED_NEGATIVE_TOKENS)
+    negative_tokens = np.random.choice(retokenised_keys, MAX_SAMPLED_NEGATIVE_TOKENS)
+    negative_tokens = [x if x[0].isalpha() else int(x) for x in negative_tokens]
 
-#     negative_up_to = 0
+    negative_up_to = 0
 
-#     w2v_data = []
+    w2v_data = []
 
-#     for instance in tqdm(data):
-#         tokens = [context_window//2 * 'CLS'] + instance['text'] + [context_window//2 * raw_token_pytorch_map['PAD']]
+    for instance in tqdm(data): # every sentence
+        tokens = [context_window//2 * 'CLS'] + instance['text'] + [context_window//2 * raw_token_pytorch_map['PAD']]
 
-#         for i in range(context_window//2, len(tokens) - context_window//2):
+        for i in range(context_window//2, len(tokens) - context_window//2): # avoid pad and cls # every token
             
-#             focus_token_retokenised = raw_token_pytorch_map.get(tokens[i], raw_token_pytorch_map['UNK'])
-#             context_words = set()
-
-#             for j in range(-context_window//2, context_window//2+1):
-#                 if j != 0: # don't want to make positive sample with self
-#                     if tokens[j] in context_words: # CLS and Padding (being start and end) being repeated
-#                         continue 
-                    
-#                     new_instance = {'token': focus_token_retokenised, 'context': raw_token_pytorch_map.get(tokens[j], raw_token_pytorch_map['UNK']), 'label': 1}
-#                     w2v_data.append(new_instance)
-#                     context_words.add(tokens[j])
+            focus_token_retokenised = raw_token_pytorch_map.get(tokens[i], raw_token_pytorch_map['UNK'])
             
-#             for j in range(len(context_words)): # sample the same number of negatives
-#                 # TODO: different for each round?
-#                 while True:
+            context_words = dict()
+
+            for j in range(-context_window//2+1, context_window//2+1):
+                if j != 0:
+                    context_words[tokens[i+j]] = 0
+
+            for j in range(-context_window//2+1, context_window//2+1): # every neighbour in window
+                if j != 0: # don't want to make positive sample with self
+                    if context_words.get(tokens[i+j], 0): # CLS and Padding (being start and end) being repeated
+                        continue 
+                    else:
+                        context_words[tokens[i+j]] = 1
                     
-#                     if negative_up_to == MAX_SAMPLED_NEGATIVE_TOKENS:
-#                         negative_up_to = 0
-#                         #TODO: shuffle
+                    mask = [raw_token_pytorch_map.get(tokens[i+j], raw_token_pytorch_map['UNK'])]
+                    for _ in range(k): # sample the same number of negatives
+                        
+                        while True:
+                            
+                            if negative_up_to == MAX_SAMPLED_NEGATIVE_TOKENS:
+                                negative_up_to = 0
 
-#                     sampled_negative_retokenised = negative_tokens[negative_up_to]
-#                     negative_up_to += 1
-#                     if sampled_negative_retokenised not in context_words: # didn't sample a positive case
-#                         break
+                            sampled_negative_retokenised = negative_tokens[negative_up_to]
+                            negative_up_to += 1
 
-#                 new_instance = {'token': focus_token_retokenised, 'context': sampled_negative_retokenised, 'label': 0}
-#                 w2v_data.append(new_instance)
+                            if sampled_negative_retokenised not in context_words: # didn't sample a positive case
+                                mask.append(raw_token_pytorch_map[sampled_negative_retokenised])
+                                break
+
+                    
+                    new_instance = {'token': focus_token_retokenised, 'mask': mask}
+                    w2v_data.append(new_instance)
     
-#     return w2v_data
+    return w2v_data
 
 
 def BERT_pretrain_Generation(data: list, seed: int, raw_token_pytorch_map: dict, MAX_SENTENCE_LENGTH):
@@ -207,7 +214,7 @@ def BERT_pretrain_Generation(data: list, seed: int, raw_token_pytorch_map: dict,
         # 15% of tokens are random
         masked_token_positions = np.random.choice(range(len(tokens)), int(0.15 * len(tokens)), False)
         
-        # 80% becomes [MASK], 15% becomes random, 10% unchanged ith token, 10% random token
+        # 80% becomes [MASK], 15% becomes random, of which 10% unchanged ith token, 10% random token
         for masked_token_position in masked_token_positions:
             if mask_randomness[negative_up_to] < 0.8:
                 tokens[masked_token_position] = raw_token_pytorch_map['MASK']
