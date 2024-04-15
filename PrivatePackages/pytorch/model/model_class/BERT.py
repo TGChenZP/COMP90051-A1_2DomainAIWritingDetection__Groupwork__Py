@@ -50,7 +50,7 @@ class BERT(ClassificationModel):
             # Decode
 
             if self.configs.res_learning:
-                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
             else:
                 self.mlp = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
@@ -58,6 +58,8 @@ class BERT(ClassificationModel):
 
             self.out = nn.Linear(configs.d_model, configs.d_output)
             self.softmax = nn.Softmax(dim=1)
+
+            self.pretrain_out = nn.Linear(configs.d_model, configs.n_unique_tokens)
 
 
         def forecast(self, x):
@@ -69,21 +71,33 @@ class BERT(ClassificationModel):
 
             return enc_out
 
-    
 
-        def forward(self, x):
+        def forward(self, x, mask=False):
             
+            if type(mask) != bool: # pretraining
+                x = self.forecast(x)
 
-            x = self.forecast(x)
+                x = x[range(x.shape[0]), mask, :] # cls
 
-            x = x[:, 0, :] # cls
+                for layer in self.mlp:
+                    x = layer(x)
 
-            for layer in self.mlp:
-                x = layer(x)
+                y = self.pretrain_out(x)
+                
+                return y  
 
-            y = self.softmax(self.out(x))
-            
-            return y  
+            else:
+
+                x = self.forecast(x)
+
+                x = x[:, 0, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.out(x)
+                
+                return y  
 
 
 class BERT_DANN(DANN_Model):
@@ -130,17 +144,17 @@ class BERT_DANN(DANN_Model):
             self.gradient_reverse = GradientReversalLayer()
 
             if self.configs.res_learning:
-                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
             else:
-                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_clf = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
                 
             if self.configs.res_learning:
-                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
             else:
-                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model,
+                self.mlp_dom = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
                                                     self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
 
             self.out_dom = nn.Linear(self.configs.d_model, self.configs.d_output)
@@ -159,23 +173,231 @@ class BERT_DANN(DANN_Model):
 
     
 
-        def forward(self, x):
+        def forward(self, x, mask=False):
+            
+            if type(mask) != bool: # pretraining
+                x = self.forecast(x)
+
+                x = x[range(x.shape[0]), mask, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.out(x)
+                
+                return y 
+
+            else:
+                x = self.forecast(x)
+
+                x = x[:, 0, :] # cls
+
+                for layer in self.mlp_clf:
+                    x = layer(x)
+
+                rev_x = self.gradient_reverse(x)
+
+                for layer in self.mlp_dom:
+                    rev_x = layer(rev_x)
+
+                y = self.out_clf(x)
+
+                dom = self.out_dom(rev_x)
+
+                return y, dom
+        
+
+class BERT_DCE_DANN(DCE_DANNModel):
+
+    class Model(nn.Module):
+        """
+        Vanilla Transformer
+        with O(L^2) complexity
+        Paper link: https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+        Adjusted to be encoder only, with MLP as decoder; and takes either 
+        flatten-projected last-layer embeddings, or cls, or last position as the 
+        representation of the embedding of encoder
+        """
+
+        def __init__(self, configs):
+            super().__init__() 
+
+            self.configs = configs
+
+            assert configs.d_model % configs.n_heads == 0, "d_model must be a multiple of n_heads"
+
+            # Embedding
+            self.embedding = PositionalWordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len, train_embedding=configs.train_embedding)
+            # Encoder
+            self.encoder = Encoder(
+                [
+                    EncoderLayer(
+                        AttentionLayer(
+                            FullAttention(configs.mask_flag, None, attention_dropout=configs.dropout,
+                                        output_attention=False), configs.d_model, configs.n_heads),
+                        configs.d_model,
+                        configs.d_ff,
+                        dropout=configs.dropout,
+                        activation=configs.activation,
+                    ) for l in range(configs.e_layers)
+                ],
+                norm_layer=torch.nn.LayerNorm(configs.d_model)
+            )
+
+            # Decode
+
+
+            self.gradient_reverse = GradientReversalLayer()
+
+            if self.configs.res_learning:
+                self.mlp_clf = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
+            else:
+                self.mlp_clf = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_clf_layers)])
+                
+            if self.configs.res_learning:
+                self.mlp_dom = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
+            else:
+                self.mlp_dom = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_dom_layers)])
+
+            self.out_dom = nn.Linear(self.configs.d_model, self.configs.d_output)
+            self.out_clf = nn.Linear(self.configs.d_model, self.configs.d_output)
+            self.softmax = nn.Softmax(dim=1)
+
+
+        def forecast(self, x):
+            # Embedding
+
+            enc_out = self.embedding(x)
+
+            enc_out, attns = self.encoder(enc_out, attn_mask=None)
+
+            return enc_out
+
+    
+
+        def forward(self, x, mask=False):
+            
+            if type(mask) != bool: # pretraining
+                x = self.forecast(x)
+
+                x = x[range(x.shape[0]), mask, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.out(x)
+                
+                return y 
+
+            else:
+                x = self.forecast(x)
+
+                x = x[:, 0, :] # cls
+
+                for layer in self.mlp_clf:
+                    x = layer(x)
+
+                rev_x = self.gradient_reverse(x)
+
+                for layer in self.mlp_dom:
+                    rev_x = layer(rev_x)
+
+                y = self.out_clf(x)
+
+                dom = self.out_dom(rev_x)
+
+                return y, dom
             
 
-            x = self.forecast(x)
+class BERT_Hinge(HingeModel):
 
-            x = x[:, 0, :] # cls
+    class Model(nn.Module):
+        """
+        Vanilla Transformer
+        with O(L^2) complexity
+        Paper link: https://proceedings.neurips.cc/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
 
-            for layer in self.mlp_clf:
-                x = layer(x)
+        Adjusted to be encoder only, with MLP as decoder; and takes either 
+        flatten-projected last-layer embeddings, or cls, or last position as the 
+        representation of the embedding of encoder
+        """
 
-            rev_x = self.gradient_reverse(x)
+        def __init__(self, configs):
+            super().__init__() 
 
-            for layer in self.mlp_dom:
-                rev_x = layer(rev_x)
+            self.configs = configs
 
-            y = self.softmax(self.out_clf(x))
+            assert configs.d_model % configs.n_heads == 0, "d_model must be a multiple of n_heads"
 
-            dom = self.softmax(self.out_dom(rev_x))
+            # Embedding
+            self.embedding = PositionalWordEmbedding(configs.d_model, configs.n_unique_tokens, configs.seq_len, train_embedding=configs.train_embedding)
+            # Encoder
+            self.encoder = Encoder(
+                [
+                    EncoderLayer(
+                        AttentionLayer(
+                            FullAttention(configs.mask_flag, None, attention_dropout=configs.dropout,
+                                        output_attention=False), configs.d_model, configs.n_heads),
+                        configs.d_model,
+                        configs.d_ff,
+                        dropout=configs.dropout,
+                        activation=configs.activation,
+                    ) for l in range(configs.e_layers)
+                ],
+                norm_layer=torch.nn.LayerNorm(configs.d_model)
+            )
 
-            return y, dom
+            # Decode
+
+            if self.configs.res_learning:
+                self.mlp = nn.ModuleList([ResLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                    self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
+            else:
+                self.mlp = nn.ModuleList([LinearLayer(self.configs, self.configs.d_model, self.configs.d_model, self.configs.activation,
+                                                        self.configs.dropout) for _ in range(self.configs.n_mlp_layers)])
+
+            self.out = nn.Linear(configs.d_model, configs.d_output)
+            self.softmax = nn.Softmax(dim=1)
+
+
+        def forecast(self, x):
+            # Embedding
+
+            enc_out = self.embedding(x)
+
+            enc_out, attns = self.encoder(enc_out, attn_mask=None)
+
+            return enc_out
+
+
+        def forward(self, x, mask=False):
+            
+            if type(mask) != bool: # pretraining
+                x = self.forecast(x)
+
+                x = x[range(x.shape[0]), mask, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.out(x)
+                
+                return y  
+
+            else:
+
+                x = self.forecast(x)
+
+                x = x[:, 0, :] # cls
+
+                for layer in self.mlp:
+                    x = layer(x)
+
+                y = self.out(x)
+                
+                return y  

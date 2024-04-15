@@ -17,5 +17,3 @@ import torch.nn as nn
 import torch.nn.init as init
 
 from pytorch_to_sklearn.utils import *
-
-from collections import defaultdict as dd

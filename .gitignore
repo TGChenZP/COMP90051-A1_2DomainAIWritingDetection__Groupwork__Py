@@ -1,0 +1,7 @@
+PrivatePackages
+./PrivatePackages
+*.csv
+*.pickle
+*.json
+*.npz
+*.pkl
