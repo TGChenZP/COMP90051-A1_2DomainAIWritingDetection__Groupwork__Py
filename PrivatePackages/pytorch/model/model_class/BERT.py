@@ -183,7 +183,7 @@ class BERT_DANN(DANN_Model):
                 for layer in self.mlp:
                     x = layer(x)
 
-                y = self.out(x)
+                y = self.pretrain_out(x)
                 
                 return y 
 
@@ -290,7 +290,7 @@ class BERT_DCE_DANN(DCE_DANNModel):
                 for layer in self.mlp:
                     x = layer(x)
 
-                y = self.out(x)
+                y = self.pretrain_out(x)
                 
                 return y 
 
@@ -385,7 +385,7 @@ class BERT_Hinge(HingeModel):
                 for layer in self.mlp:
                     x = layer(x)
 
-                y = self.out(x)
+                y = self.pretrain_out(x)
                 
                 return y  
 
