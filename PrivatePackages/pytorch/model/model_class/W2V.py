@@ -6,6 +6,7 @@ from model.model_class.layers.Embed import PositionalWordEmbedding
 from model.model_class.layers.modules import *
 from model.model_class.layers.Transformer_EncDec import Encoder, EncoderLayer
 import numpy as np
+from model.model_class.__template__ import *
 
 
 class W2V(W2V_Model):
