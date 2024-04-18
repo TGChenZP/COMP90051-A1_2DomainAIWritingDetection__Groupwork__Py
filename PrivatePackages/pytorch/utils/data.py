@@ -22,10 +22,15 @@ def crop_sentence_length(data: list, max_sentence_length: int, make_cropped_rema
                 new_instance['text'] = cropped_text
                 try:
                     new_instance['label'] = instance['label'] 
-                    new_instance['domain'] = instance['domain']
+                    
                 except:
                     pass
-                new_instance['id'] = instance['id'] + (i*0.01) # TODO
+                new_instance['domain'] = instance['domain']
+                new_instance['id'] = instance['id'] + (i*0.01) 
+                new_instance['perplexity'] = instance['perplexity']
+                new_instance['burstiness'] = instance['burstiness']
+                new_instance['length'] = instance['length']
+                new_instance['unique_word_ratio'] = instance['unique_word_ratio']
                 
                 new_instance['remains'] = 0 if i == 0 else 1 
                 
@@ -111,6 +116,7 @@ def Data_Factory(train_data, val_data, test_data, future_data, max_sentence_leng
     test_dom = [instance['domain'] for instance in test_data_transformed]
 
     future_x = [instance['text'] for instance in future_data_transformed]
+    future_dom = [instance['domain'] for instance in future_data_transformed]
 
     train_y = [[0, 1] if label == 1 else [1, 0] for label in train_y] 
     val_y = [[0, 1] if label == 1 else [1, 0] for label in val_y]
@@ -120,7 +126,18 @@ def Data_Factory(train_data, val_data, test_data, future_data, max_sentence_leng
     val_dom = [[0, 1] if domain == 1 else [1, 0] for domain in val_dom]
     test_dom = [[0, 1] if domain == 1 else [1, 0] for domain in test_dom]
 
-    return train_x, train_y, val_x, val_y, test_x, test_y, train_dom, val_dom, test_dom, future_x
+    return train_x, train_y, val_x, val_y, test_x, test_y, train_dom, val_dom, test_dom, future_x, future_dom
+
+def Data_Factory_aux(train_data, val_data, test_data, future_data, features):
+    
+    """ Convert our (cropped) data into train x, train y, val x, val y, test x, test y etc """
+
+    train_aux = [[instance[feature] for feature in features] for instance in train_data]
+    val_aux = [[instance[feature] for feature in features] for instance in val_data]
+    test_aux = [[instance[feature] for feature in features] for instance in test_data]
+    future_aux = [[instance[feature] for feature in features] for instance in future_data]
+
+    return train_aux, val_aux, test_aux, future_aux
     
 def get_distribution(train_y) -> Tuple[float, float]:
 
