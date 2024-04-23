@@ -1628,7 +1628,6 @@ class W2V_Model():
             epoch_loss = 0
             epoch_pred, epoch_true = [], []
 
-
             np.random.seed(seeds[epoch])
             np.random.shuffle(total_train_X)
             np.random.seed(seeds[epoch]) # reset seed so that they are shuffled in same order
@@ -1659,7 +1658,6 @@ class W2V_Model():
                 if self.configs.grad_clip: # gradient clip
                     nn.utils.clip_grad_norm(self.model.parameters(), 2)
                 self.optimizer.step()
-
                 epoch_loss += loss.detach().cpu().numpy()
                 epoch_pred += pred.detach().cpu().tolist()
 
@@ -1672,7 +1670,6 @@ class W2V_Model():
             epoch_pred_label = [1 if i[0] == max(i) else 0 for i in epoch_pred]
 
             epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_label))], epoch_pred_label)
-
 
             record = f'''Epoch {epoch+1} Train | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f} '''
             print(record)
@@ -1727,7 +1724,6 @@ class W2V_Model():
         epoch_accuracy = accuracy_score([1 for _ in range(len(epoch_pred_y_label))], epoch_pred_y_label)
 
         record = f'''Epoch {epoch+1} Val   | Loss: {epoch_loss:>7.4f} | Accuracy: {epoch_accuracy:>7.4f}'''
-
         print(record)
 
         if not evaluation_mode:

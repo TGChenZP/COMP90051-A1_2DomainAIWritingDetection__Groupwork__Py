@@ -6,3 +6,10 @@
 *.pyc
 *.csv
 catboost_info
+PrivatePackages
+./PrivatePackages
+*.csv
+*.pickle
+*.json
+*.npz
+*.pkl
