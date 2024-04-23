@@ -1,7 +1,14 @@
-# COMP90051-A1__Groupwork__Py
-Authors: `Lang (Ron) Chen`, `Un Leng Kam`, `Di Wu`
+## COMP90086 Computer Vision Group Project
+
+#### Joint AI Generated Text detection from different sources 
 
 Semester 1 2024, University of Melbourne
+
+#### Group Members
+
+- **Name:** Lang (Ron) Chen **Student ID:** 1181506 **Email:** Lachen1@student.unimelb.edu.au
+- **Name:** Un Leng Kam **Student ID:** 1178863 **Email:** ukam@student.unimelb.edu.au
+- **Name:** Di Wu **Student ID:** 1208784 **Email:** dww3@student.unimelb.edu.au
 
 ---
 
