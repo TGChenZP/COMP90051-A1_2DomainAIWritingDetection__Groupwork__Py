@@ -16,6 +16,8 @@ We built a system for AI generated text detection (NLP classification of human a
 
 Our experiments also consists non Deep Learning models as prototypes and proof of concepts (i.e. upsampling and auxillary features) which can be found in `./notebooks` alongside our data processing and auxillary feature generation notebooks. `./W2V_Pretraining.ipynb` is the training UI for pretraining based on W2V, of which results were not used in the final model.
 
+The script for training the domain classifying LGBM is also in `./notebooks`, and serves as an important part of feature engineering as its 99% performance enabled us to use it as feature in our pipeline.
+
 `./PrivatePackages/Tuners` contain tuning packages used in non-DL experiments.
 
 ---
