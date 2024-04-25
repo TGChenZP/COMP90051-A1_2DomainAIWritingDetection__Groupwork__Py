@@ -1,4 +1,4 @@
-## COMP90086 Computer Vision Group Project
+## COMP90051 SML Assignment 1
 
 #### Joint AI Generated Text detection from different sources 
 
@@ -12,13 +12,17 @@ Semester 1 2024, University of Melbourne
 
 ---
 
-We built a system for AI generated text detection (NLP classification of human and AI written text) with source and inference data from two domains. Our primary solution is a Deep BERT based framework, with source code found in  `./PrivatePackages/pytorch` and Training UI found in `./main.py`. Features of our source code include Domain Adversarial Neural Network, manually defined loss functions as well as multiple architectures based on LSTM and Transformers.
+We built a system for AI generated text detection (NLP classification of human and AI written text) with source and inference data from two domains. Our primary solution is a Deep BERT based framework, but also conducted non-Deep Learning modelsas prototypes and proof of concepts. Below are a list of our key notebooks/directories and their functionalities
 
-Our experiments also consists non Deep Learning models as prototypes and proof of concepts (i.e. upsampling and auxillary features) which can be found in `./notebooks` alongside our data processing and auxillary feature generation notebooks. `./W2V_Pretraining.ipynb` is the training UI for pretraining based on W2V, of which results were not used in the final model.
+- `./PrivatePackages/pytorch` contain data factory, PyTorch Deep model (BERT and LSTM and W2V) definitions. Domain Adversarial Nerual Network and self-defined losses can also be found here.
 
-The script for training the domain classifying LGBM is also in `./notebooks`, and serves as an important part of feature engineering as its 99% performance enabled us to use it as feature in our pipeline.
+- `./main.py` and `./W2V_Pretraining.ipynb` is the training UI for deep learning models and pretraining. Please run the scripts of `./notebooks` to get the engineered features before running deep training.
 
-`./PrivatePackages/Tuners` contain tuning packages used in non-DL experiments.
+- `./notebooks` contain non-deep experiments, EDA scripts and feature/data engineering notebooks. Of particular importance is `1_Anderson_SeperateDomainCLF_experiment.ipynb` which created the classifier predictor for 'domain'. Please run in order
+
+- `./notebooks/Tuning` contain tuning scrips for non-Deep models.
+
+- `./PrivatePackages/Tuners` contain tuning packages used in non-DL experiments.
 
 ---
 
