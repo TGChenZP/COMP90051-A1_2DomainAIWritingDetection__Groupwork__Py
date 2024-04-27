@@ -27,7 +27,7 @@ class PositionalWordEmbedding(nn.Module):
 
     def forward(self, x):
 
-        return (self.pe[:, :x.size(1)] + self.embedding(x))
+        return (self.pe[:, :x.size(1)] + self.embedding(x)) * math.sqrt(self.embedding.weight.size(1))
 
 
 class WordEmbedding(nn.Module):
