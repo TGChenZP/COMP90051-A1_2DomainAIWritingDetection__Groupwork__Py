@@ -1,4 +1,4 @@
-## COMP90051 SML Assignment 1
+## COMP90051 Statistical Machine Learning Assignment 1
 
 #### Joint AI Generated Text detection from different sources 
 
